@@ -1,0 +1,63 @@
+apply plugin: 'kotlin-platform-js'
+apply plugin: 'com.moowork.node'
+
+kotlin {
+    experimental {
+        coroutines 'enable'
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+sourceSets {
+    main.kotlin.srcDirs += 'src'
+    test.kotlin.srcDirs += 'test'
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:$coroutines_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+    expectedBy project(':kmulti-test-common')
+}
+
+def target = "${projectDir}/build/classes/main"
+
+[compileKotlin2Js, compileTestKotlin2Js]*.configure {
+    kotlinOptions {
+        metaInfo = true
+        sourceMap = true
+        sourceMapEmbedSources = "always"
+        moduleKind = 'umd'
+    }
+}
+
+task populateNodeModules(type: Copy, dependsOn: compileKotlin2Js) {
+    from compileKotlin2Js.destinationDir
+
+    configurations.testCompile.each {
+        from zipTree(it.absolutePath).matching { include '*.js' }
+    }
+
+    into "${buildDir}/node_modules"
+}
+
+node {
+    version = node_version
+    download = true
+}
+
+task installMocha(type: NpmTask) {
+    args = ['install', 'mocha']
+}
+
+task runMocha(type: NodeTask, dependsOn: [compileTestKotlin2Js, populateNodeModules, installMocha]) {
+    script = file('node_modules/mocha/bin/mocha')
+    args = [compileTestKotlin2Js.outputFile]
+}
+
+test.dependsOn runMocha

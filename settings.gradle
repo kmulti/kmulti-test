@@ -1,0 +1,4 @@
+rootProject.name = 'kmulti-test'
+include ':kmulti-test-jvm'
+include ':kmulti-test-js'
+include ':kmulti-test-common'

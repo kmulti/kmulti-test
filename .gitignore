@@ -1,0 +1,13 @@
+# Vim swap files
+*.swp
+
+# Gradle build output
+.gradle/
+build/
+out/
+gradle/
+node_modules/
+package-lock.json
+
+# IntelliJ files
+.idea/
